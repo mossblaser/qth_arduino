@@ -1,0 +1,24 @@
+{
+  "name": "qth",
+  "description": "An Arduino-compatible client for the Qth home automation protocol.",
+  "keywords": "home automation,mqtt,qth",
+  "authors": {
+    "name": "Jonathan Heathcote",
+    "email": "mail@jhnet.co.uk",
+    "maintainer": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mossblaser/qth_arduino.git"
+  },
+  "version": "0.1.0",
+  "license": "MIT",
+  "frameworks": "arduino",
+  "dependencies": {
+    "name": "PubSubClient",
+    "version": "^2.6.0"
+  },
+  "build": {
+    "flags": "-DMQTT_MAX_PACKET_SIZE=512"
+  }
+}
