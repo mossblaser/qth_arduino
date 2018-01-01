@@ -4,6 +4,10 @@
 #include <PubSubClient.h>
 #include <Client.h>
 
+#if MQTT_MAX_PACKET_SIZE < 512
+#error "Insufficient MQTT packet size: Add build_flags = -DMQTT_MAX_PACKET_SIZE=512 (or similar) to platformio.ini"
+#endif
+
 namespace Qth {
 	
 	typedef void (*callback_t)(const char *topic, const char *json);
