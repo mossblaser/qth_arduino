@@ -16,10 +16,10 @@
 
 
 // Update these with values suitable for your network.
-const char* wifiSsid = "Cubit";
-const char* wifiPassword = "yes pwnt";
+const char* wifiSsid = "<SSID HERE>";
+const char* wifiPassword = "<PASSWORD HERE>";
 
-const char* qthServer = "192.168.1.1";
+const char* qthServer = "<HOSTNAME OR IP HERE>";
 const char* qthClientId = "esp8266-led-blinker";
 
 // Define the Qth client (specifying that it use the WiFi connection for comms)
