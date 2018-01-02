@@ -179,6 +179,11 @@ namespace Qth {
 				_set(initialValue);
 			};
 			
+			~StoredProperty() {
+				// Free storage
+				_set(NULL);
+			}
+			
 			/**
 			 * Set the value of this property.
 			 *
