@@ -1,5 +1,5 @@
 {
-  "name": "qth",
+  "name": "Qth",
   "description": "An Arduino-compatible client for the Qth home automation protocol.",
   "keywords": "home automation,mqtt,qth",
   "authors": {
