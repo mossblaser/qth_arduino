@@ -52,6 +52,8 @@ namespace Qth {
 				nextRegistration(NULL),
 				nextSubscription(NULL)
 				{};
+			
+			virtual ~Entity() {};
 		
 		friend class QthClient;
 	};
@@ -116,6 +118,8 @@ namespace Qth {
 			         const char *onUnregisterJson="") :
 				Property(name, NULL, description, oneToMany, onUnregisterJson)
 				{};
+			
+			virtual ~Property() {};
 	};
 	
 	/**
@@ -135,7 +139,7 @@ namespace Qth {
 		protected:
 			char *value;
 			
-			void _set(const char *newValue);
+			virtual void _set(const char *newValue);
 			virtual void onConnect();
 			virtual void call(const char *topic, const char *json);
 		
@@ -146,7 +150,8 @@ namespace Qth {
 			 * Though you can use setProperty to set this property, it is recommended
 			 * you use the set() method of this StoredProperty object. This will
 			 * ensure that calling get() will always return the latest value of the
-			 * property, even while disconnected from Qth.
+			 * property, even while disconnected from Qth or not watching the
+			 * property.
 			 *
 			 * @param name The full Qth path of the property.
 			 * @param initialValue The initial value to assign to the property. If
@@ -179,7 +184,7 @@ namespace Qth {
 				_set(initialValue);
 			};
 			
-			~StoredProperty() {
+			virtual ~StoredProperty() {
 				// Free storage
 				_set(NULL);
 			}
@@ -194,13 +199,84 @@ namespace Qth {
 			 * registerProperty), calling set() while disconnected will result in a
 			 * call to set the property once reconnected.
 			 */
-			void set(const char *newValue);
+			virtual void set(const char *newValue);
 			
 			/**
 			 * Get the most recently recieved value of the property. The returned
 			 * pointer may be invalidated upon the next call to any Qth API.
 			 */
-			const char *get();
+			virtual const char *get();
+	};
+	
+	/**
+	 * Define an EEPROM-backed Qth Property, storing the most recent value
+	 * locally (convenience API).
+	 *
+	 * Like a StoredProperty except the received value is stored in EEPROM and
+	 * loaded on startup to allow long-term persistance of values.
+	 */
+	class EEPROMProperty : public StoredProperty {
+		protected:
+			size_t maxLength;
+			size_t eepromAddress;
+			
+			virtual void _set(const char *newValue);
+		
+		public:
+			/**
+			 * Define an EEPROM-backed Qth property.
+			 *
+			 * You must ensure the Arduino 'EEPROM' library is ready-to-use when
+			 * creating instances of this class. In particular, on ESP8266-based
+			 * platforms this means EEPROM.begin() must have been called. This means
+			 * this class will have to be dynamically allocated.
+			 *
+			 * Property values are stored into EEPROM by this class which are
+			 * reloaded on startup. You are responsible for allocating blocks of the
+			 * EEPROM address space of sufficient size.
+			 *
+			 * You should initialise the EEPROM block chosen space to contain valid
+			 * null-terminated JSON (or a zero-length string for an empty property)
+			 * before first use. Failing to do this will result in an invalid
+			 * property value being sent to Qth. Though this library will not crash
+			 * when missing a null-terminator, Qth clients may behave oddly when
+			 * recieved values are not valid JSON.
+			 *
+			 * Though you can use setProperty to set this property, it is recommended
+			 * you use the set() method of this EEPROMProperty object. This will
+			 * ensure that set values are immediately stored in EEPROM and calling
+			 * get() will always return the latest value of the property, even while
+			 * disconnected from Qth or not watching the property.
+			 *
+			 * @param name The full Qth path of the property.
+			 * @param maxLength The maximum number of bytes required to store the
+			 *        value of this property (including a NULL terminator). Any value
+			 *        longer than this will be truncated when stored into EEPROM.
+			 * @param eepromAddress The EEPROM address offset at which to store the
+			 *        value of this property. The property value will be written to
+			 *        the EEPROM whenever it changes and be read upon the initial
+			 *        creation of this EEPROMProperty.
+			 * @param description A human readable description of the property.
+			 *        Needn't be provided if you don't register the property.
+			 * @param oneToMany Is this a one-to-many (vs many-to-one) property.
+			 *        Needn't be provided if you don't register the property.
+			 * @param onUnregisterJson A value to set the property to when this
+			 *        client disconnects from Qth. Set to an empty string to delete
+			 *        the property. Set to a valid JSON value to set it. Set to NULL
+			 *        to neither set or delete the property. Needn't be provided if
+			 *        you don't register the property.
+			 * @param callback Callback called with the path and JSON of the
+			 *        property whenever it changes.
+			 */
+			EEPROMProperty(const char *name,
+			               size_t maxLength=MQTT_MAX_PACKET_SIZE,
+			               size_t eepromAddress=0,
+			               const char *description="",
+			               bool oneToMany=false,
+			               const char *onUnregisterJson="",
+			               callback_t callback=NULL);
+			
+			virtual ~EEPROMProperty();
 	};
 	
 	/**

@@ -1,3 +1,5 @@
+#include <EEPROM.h>
+
 #include "Qth.h"
 
 void Qth::StoredProperty::_set(const char *newValue) {
@@ -41,6 +43,41 @@ void Qth::StoredProperty::onConnect() {
 	Property::onConnect();
 };
 
+Qth::EEPROMProperty::EEPROMProperty(const char *name,
+                                    size_t maxLength,
+                                    size_t eepromAddress,
+                                    const char *description,
+                                    bool oneToMany,
+                                    const char *onUnregisterJson,
+                                    callback_t callback) :
+	StoredProperty(name, NULL, description, oneToMany, onUnregisterJson, callback),
+	maxLength(maxLength),
+	eepromAddress(eepromAddress)
+{
+	// Read the initial value from flash
+	char *flash_stored_codes = new char[maxLength];
+	for (size_t i = 0; i < maxLength-1; i++) {
+		flash_stored_codes[i] = EEPROM.read(i);
+	}
+	flash_stored_codes[maxLength-1] = '\0';
+	set(flash_stored_codes);
+	delete flash_stored_codes;
+}
+
+Qth::EEPROMProperty::~EEPROMProperty() {
+}
+
+void Qth::EEPROMProperty::_set(const char *newValue) {
+	// Persist into EEPROM
+	size_t i = 0;
+	do {
+		EEPROM.write(eepromAddress + i, value[i]);
+	} while (value[i++] != '\0' && i < maxLength);
+	EEPROM.commit();
+	
+	// Store the value
+	StoredProperty::_set(newValue);
+}
 
 Qth::QthClient *Qth::QthClient::qth = NULL;
 
