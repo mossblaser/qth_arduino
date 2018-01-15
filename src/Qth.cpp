@@ -55,28 +55,31 @@ Qth::EEPROMProperty::EEPROMProperty(const char *name,
 	eepromAddress(eepromAddress)
 {
 	// Read the initial value from flash
-	char *flash_stored_codes = new char[maxLength];
+	char *flash_stored_codes = (char *)malloc(maxLength);
 	for (size_t i = 0; i < maxLength-1; i++) {
 		flash_stored_codes[i] = EEPROM.read(i);
 	}
 	flash_stored_codes[maxLength-1] = '\0';
 	set(flash_stored_codes);
-	delete flash_stored_codes;
+	free(flash_stored_codes);
 }
 
 Qth::EEPROMProperty::~EEPROMProperty() {
 }
 
 void Qth::EEPROMProperty::_set(const char *newValue) {
-	// Persist into EEPROM
-	size_t i = 0;
-	do {
-		EEPROM.write(eepromAddress + i, value[i]);
-	} while (value[i++] != '\0' && i < maxLength);
-	EEPROM.commit();
-	
-	// Store the value
-	StoredProperty::_set(newValue);
+	// Persist into EEPROM (NB: can't represent NULL value in EEPROM so just
+	// ignore this).
+	if (newValue) {
+		size_t i = 0;
+		do {
+			EEPROM.write(eepromAddress + i, newValue[i]);
+		} while (newValue[i++] != '\0' && i < maxLength);
+		EEPROM.commit();
+		
+		// Store the value
+		StoredProperty::_set(newValue);
+	}
 }
 
 Qth::QthClient *Qth::QthClient::qth = NULL;
@@ -245,7 +248,9 @@ void Qth::QthClient::unregisterEntity(Qth::Entity *entity) {
 		if ((*registrationPtr) == entity) {
 			*registrationPtr = entity->nextRegistration;
 		}
-		registrationPtr = &((*registrationPtr)->nextRegistration);
+		if (*registrationPtr) {
+			registrationPtr = &((*registrationPtr)->nextRegistration);
+		}
 	}
 	
 	sendRegistration();
@@ -268,7 +273,9 @@ void Qth::QthClient::unwatchEntity(Qth::Entity *entity) {
 		if ((*subscriptionPtr) == entity) {
 			*subscriptionPtr = entity->nextSubscription;
 		}
-		subscriptionPtr = &((*subscriptionPtr)->nextSubscription);
+		if (*subscriptionPtr) {
+			subscriptionPtr = &((*subscriptionPtr)->nextSubscription);
+		}
 	}
 	
 	mqtt.unsubscribe(entity->name);
@@ -281,5 +288,3 @@ void Qth::QthClient::setProperty(Property *property, const char *json) {
 void Qth::QthClient::sendEvent(Event *event, const char *json) {
 	mqtt.publish(event->name, json, false);
 }
-
-

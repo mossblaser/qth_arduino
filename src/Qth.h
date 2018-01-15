@@ -50,7 +50,8 @@ namespace Qth {
 				description(description),
 				onUnregisterJson(onUnregisterJson),
 				nextRegistration(NULL),
-				nextSubscription(NULL)
+				nextSubscription(NULL),
+				qth(NULL)
 				{};
 			
 			virtual ~Entity() {};
@@ -179,7 +180,8 @@ namespace Qth {
 			               bool oneToMany=false,
 			               const char *onUnregisterJson="",
 			               callback_t callback=NULL) :
-				Property(name, callback, description, oneToMany, onUnregisterJson)
+				Property(name, callback, description, oneToMany, onUnregisterJson),
+				value(NULL)
 			{
 				_set(initialValue);
 			};
