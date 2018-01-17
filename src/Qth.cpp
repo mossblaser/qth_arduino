@@ -25,7 +25,7 @@ void Qth::StoredProperty::set(const char *newValue) {
 	if (qth && value) {
 		qth->setProperty(this, value);
 	}
-	call(name, value);
+	Property::call(name, value);
 }
 
 const char *Qth::StoredProperty::get() {
@@ -57,7 +57,7 @@ Qth::EEPROMProperty::EEPROMProperty(const char *name,
 	// Read the initial value from flash
 	char *flash_stored_codes = (char *)malloc(maxLength);
 	for (size_t i = 0; i < maxLength-1; i++) {
-		flash_stored_codes[i] = EEPROM.read(i);
+		flash_stored_codes[i] = EEPROM.read(eepromAddress + i);
 	}
 	flash_stored_codes[maxLength-1] = '\0';
 	set(flash_stored_codes);
